@@ -1,17 +1,22 @@
 #include <Audio.h>
+#include "./bass_hit.h"
 #include <Wire.h>
 #include <SPI.h>
 #include <SD.h>
 #include <SerialFlash.h>
 #include <MIDI.h>
 
+const int SDCARD_CS_PIN = 10;
+const int SDCARD_MOSI_PIN = 7;
+const int SDCARD_SCK_PIN = 14;
+
 // GUItool: begin automatically generated code
-AudioSynthSimpleDrum     bassHitSynth;          //xy=87,308
+NeoHexaneBassHit         bassHitSynth;          //xy=87,308
 AudioEffectFlange        bassHitFlange;        	//xy=283,408
 AudioMixer4              bassHitMixer;         	//xy=508,
-AudioOutputI2S           audioOut;           		//xy=658,367
-AudioConnection          c0(bassHitSynth, 0, bassHitFlange, 0);
-AudioConnection          c1(bassHitFlange, 0, bassHitMixer, 0);
+AudioOutputI2S           audioOut;           		//xy=658,3 67
+AudioConnection          c0(bassHitSynth, 0, bassHitMixer, 0);
+// AudioConnection          c1(bassHitFlange, 0, bassHitMixer, 0);
 AudioConnection          c2(bassHitMixer, 0, audioOut, 0);
 AudioConnection          c3(bassHitMixer, 0, audioOut, 1);
 AudioControlSGTL5000     audioShield;     		//xy=208,617
@@ -19,21 +24,34 @@ AudioControlSGTL5000     audioShield;     		//xy=208,617
 
 elapsedMillis ledOnMillis;
 bool midiActivity = false;
-uint8_t bassHitSynthNote = 41;
+byte bassHitSynthNote1 = 41;
+byte bassHitSynthNote2 = 73;
 
 void setup()
 {
   Serial.begin(115200);
+  SPI.setMOSI(SDCARD_MOSI_PIN);
+  SPI.setSCK(SDCARD_SCK_PIN);
+
+  if(!(SD.begin(SDCARD_CS_PIN))) {
+    Serial.print("Cannot access SD card");
+  }
   pinMode(13, OUTPUT); // LED pin
   digitalWrite(13, LOW);
   usbMIDI.setHandleNoteOn(myNoteOn);
-  usbMIDI.setHandleNoteOff(myNoteOff);
-  usbMIDI.setHandleControlChange(myControlChange);
-  AudioMemory(8);
+  // usbMIDI.setHandleNoteOff(myNoteOff);
+  // usbMIDI.setHandleControlChange(myControlChange);
+  AudioMemory(15);
+  AudioNoInterrupts();
+  bassHitSynth.frequency(60);
+  bassHitSynth.length(1500);
+  bassHitSynth.secondMix(0.4);
+  bassHitSynth.pitchMod(0.55);
   audioShield.enable();
-  audioShield.volume(0.8);
-  bassHitMixer.gain(0, 0.8);
-
+  bassHitMixer.gain(0, 0.9);
+  audioShield.volume(0.9);
+  AudioInterrupts();
+  Serial.print("setup");
 }
 
 void loop()
@@ -57,21 +75,23 @@ void myNoteOn(byte channel, byte note, byte velocity) {
   Serial.print("Note On, ch=");
   Serial.print(channel, DEC);
   Serial.print(", note=");
-  Serial.print(note, DEC);
+  Serial.print(note);
   Serial.print(", velocity=");
   Serial.println(velocity, DEC);
-  midiActivity = true;
+  if(note == bassHitSynthNote1 || note == bassHitSynthNote2) {
+    midiActivity = true;
+    bassHitSynth.noteOn();
+  }
 }
 
-void myNoteOff(uint8_t channel, uint8_t note, uint8_t velocity) {
+void myNoteOff(byte channel, byte note, byte velocity) {
   Serial.print("Note Off, ch=");
   Serial.print(channel, DEC);
   Serial.print(", note=");
   Serial.print(note, DEC);
   Serial.print(", velocity=");
   Serial.println(velocity, DEC);
-  if(note == bassHitSynthNote) {
-
+  if(note == bassHitSynthNote1 || note == bassHitSynthNote2) {
     midiActivity = true;
   }
 }
@@ -83,5 +103,5 @@ void myControlChange(byte channel, byte control, byte value) {
   Serial.print(control, DEC);
   Serial.print(", value=");
   Serial.println(value, DEC);
-  midiActivity = true;
+  // midiActivity = true;
 }
