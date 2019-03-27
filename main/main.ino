@@ -1,27 +1,32 @@
 #include <Audio.h>
-#include "./bass_hit.h"
+#include "nhex_bass_hit.h"
+#include "nhex_controls.h"
 #include <Wire.h>
 #include <SPI.h>
 #include <SD.h>
 #include <SerialFlash.h>
 #include <MIDI.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 const int SDCARD_CS_PIN = 10;
 const int SDCARD_MOSI_PIN = 7;
 const int SDCARD_SCK_PIN = 14;
 
+#include "nhex_master_fx_etc.h" // the master / fx mixing
 // GUItool: begin automatically generated code
-NeoHexaneBassHit         bassHitSynth;          //xy=87,308
-AudioEffectFlange        bassHitFlange;        	//xy=283,408
-AudioMixer4              bassHitMixer;         	//xy=508,
-AudioOutputI2S           audioOut;           		//xy=658,3 67
-AudioConnection          c0(bassHitSynth, 0, bassHitMixer, 0);
+NHexBassHit                 bassHitSynth;          //xy=87,308
+// AudioEffectFlange        bassHitFlange;        	//xy=283,408
+// AudioMixer4              bassHitMixer;         	//xy=508,
+// AudioOutputI2S           audioOut;           		//xy=658,3 67
+// AudioConnection          c30(bassHitSynth, 0, bassHitMixer, 0);
+AudioConnection             c30(bassHitSynth, 0, inst_mix_1, 0);
 // AudioConnection          c1(bassHitFlange, 0, bassHitMixer, 0);
-AudioConnection          c2(bassHitMixer, 0, audioOut, 0);
-AudioConnection          c3(bassHitMixer, 0, audioOut, 1);
-AudioControlSGTL5000     audioShield;     		//xy=208,617
+// AudioConnection          c31(bassHitMixer, 0, audioOut, 0);
+// AudioConnection          c32(bassHitMixer, 0, audioOut, 1); 
+// AudioControlSGTL5000     audioShield;     		//xy=208,617
 // GUItool: end automatically generated code
-
+NHexControls controls(Adafruit_SSD1306);
 elapsedMillis ledOnMillis;
 bool midiActivity = false;
 byte bassHitSynthNote1 = 41;
@@ -41,14 +46,15 @@ void setup()
   usbMIDI.setHandleNoteOn(myNoteOn);
   // usbMIDI.setHandleNoteOff(myNoteOff);
   // usbMIDI.setHandleControlChange(myControlChange);
-  AudioMemory(15);
+  AudioMemory(30);
   AudioNoInterrupts();
   bassHitSynth.frequency(60);
   bassHitSynth.length(1500);
   bassHitSynth.secondMix(0.4);
   bassHitSynth.pitchMod(0.55);
   audioShield.enable();
-  bassHitMixer.gain(0, 0.9);
+      inst_mix_1.gain(0, 0.8);
+  // bassHitMixer.gain(0, 0.9);
   audioShield.volume(0.9);
   AudioInterrupts();
   Serial.print("setup");

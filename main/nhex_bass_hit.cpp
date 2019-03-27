@@ -25,13 +25,13 @@
  */
 
 #include <Arduino.h>
-#include "./bass_hit.h"
+#include "./nhex_bass_hit.h"
 
 extern "C" {
 extern const int16_t AudioWaveformSine[257];
 }
 
-void NeoHexaneBassHit::noteOn(void)
+void NHexBassHit::noteOn(void)
 {
   __disable_irq();
 
@@ -43,7 +43,7 @@ void NeoHexaneBassHit::noteOn(void)
   __enable_irq();
 }
 
-void NeoHexaneBassHit::secondMix(float level)
+void NHexBassHit::secondMix(float level)
 {
   // As level goes from 0.0 to 1.0,
   // second goes from 0 to 1/2 scale
@@ -65,7 +65,7 @@ void NeoHexaneBassHit::secondMix(float level)
 }
 
 
-void NeoHexaneBassHit::pitchMod(float depth)
+void NHexBassHit::pitchMod(float depth)
 {
   int32_t intdepth, calc;
 
@@ -107,14 +107,13 @@ void NeoHexaneBassHit::pitchMod(float depth)
 
 
 
-void NeoHexaneBassHit::update(void)
+void NHexBassHit::update(void)
 {
   audio_block_t *block_wav;
   int16_t *p_wave, *end;
   int32_t sin_l, sin_r, interp, mod, mod2, delta;
   int32_t interp2;
   int32_t index, scale;
-  bool do_second;
 
   int32_t env_sqr_current; // the square of the linear value - inexpensive quasi exponential decay.
 
