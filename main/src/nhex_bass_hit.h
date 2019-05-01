@@ -26,16 +26,16 @@
 
 #pragma once
 
-#ifndef _BASS_HIT_H_
-#define _BASS_HIT_H_
+#ifndef _NHEX_BASS_HIT_H_
+#define _NHEX_BASS_HIT_H_
 #include "AudioStream.h"
 #include "utility/dspinst.h"
 
-class NeoHexaneBassHit : public AudioStream
+class NHexBassHit : public AudioStream
 {
 public:
 
-  NeoHexaneBassHit() : AudioStream(1, inputQueueArray) 
+  NHexBassHit() : AudioStream(1, inputQueueArray) 
   {
     length(600);
     frequency(60);
