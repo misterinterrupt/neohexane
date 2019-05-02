@@ -89,7 +89,6 @@ void myNoteOn(byte channel, byte note, byte velocity)
   if (note == bassHitSynthNote1 || note == bassHitSynthNote2)
   {
     midiActivity = true;
-    bassHitSynthAmpEnv.noteOn();
     bassHitSynth.noteOn();
   }
 }
