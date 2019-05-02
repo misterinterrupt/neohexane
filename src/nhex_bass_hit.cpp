@@ -144,8 +144,8 @@ void NHexBassHit::update(void)
       }
       else
       {
+        env_lin_current -= env_decrement;
       }
-      env_lin_current -= env_decrement;
 
       env_sqr_current = multiply_16tx16t(env_lin_current, env_lin_current);
 
