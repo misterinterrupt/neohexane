@@ -34,37 +34,37 @@
 class NHexBassHit : public AudioStream
 {
 public:
-
-  NHexBassHit() : AudioStream(1, inputQueueArray) 
+  NHexBassHit() : AudioStream(1, inputQueueArray)
   {
     length(600);
     frequency(60);
     pitchMod(0x200);
-    wav_amplitude1 = 0x7fff;
+    secondMix(0.3);
+    wav_amplitude1 = 0x7ff;
     wav_amplitude2 = 0;
   }
   void noteOn();
 
   void frequency(float freq)
   {
-    if(freq < 0.0)
+    if (freq < 0.0)
       freq = 0;
-    else if(freq > (AUDIO_SAMPLE_RATE_EXACT/2))
-      freq = AUDIO_SAMPLE_RATE_EXACT/2;
+    else if (freq > (AUDIO_SAMPLE_RATE_EXACT / 2))
+      freq = AUDIO_SAMPLE_RATE_EXACT / 2;
 
-    wav_increment = (freq * (0x7fffffffLL/AUDIO_SAMPLE_RATE_EXACT)) + 0.5;
+    wav_increment = (freq * (0x7fffffffLL / AUDIO_SAMPLE_RATE_EXACT)) + 0.5;
   }
 
   void length(int32_t milliseconds)
   {
-    if(milliseconds < 0)
+    if (milliseconds < 0)
       return;
-    if(milliseconds > 5000)
+    if (milliseconds > 5000)
       milliseconds = 5000;
 
-    int32_t len_samples = milliseconds*(AUDIO_SAMPLE_RATE_EXACT/1000.0);
+    int32_t len_samples = milliseconds * (AUDIO_SAMPLE_RATE_EXACT / 1000.0);
 
-    env_decrement = (0x7fff0000/len_samples);
+    env_decrement = (0x7fff0000 / len_samples);
   };
 
   void secondMix(float level);
@@ -77,19 +77,22 @@ private:
   audio_block_t *inputQueueArray[1];
 
   // Envelope params
-  int32_t env_lin_current; // present value of linear slope.
-  int32_t env_decrement;   // how each sample deviates from previous.
+  bool fade_to_start_attack_level = false;
+  int32_t env_attack_start_level = 0x7fff0000; // 2147418112 for some reason
+  int32_t env_zero_level = 0x0000ffff;         // 65535 for some reason
+  int32_t env_lin_prev;                        // previous value of linear slope
+  int32_t env_lin_current = 0x00000000;        // present value of linear slope.
+  int32_t env_decrement;                       // how each sample deviates from previous.
 
   // Waveform params
-  uint32_t wav_phasor;      
-  uint32_t wav_phasor2;     
-  
+  uint32_t wav_phasor = 0;
+  uint32_t wav_phasor2 = 0;
+
   int16_t wav_amplitude1;
   int16_t wav_amplitude2;
-  
+
   uint32_t wav_increment;
-  int32_t  wav_pitch_mod;
+  int32_t wav_pitch_mod;
 };
 
 #endif
-

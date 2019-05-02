@@ -27,19 +27,16 @@
 #include <Arduino.h>
 #include "./nhex_bass_hit.h"
 
-extern "C" {
-extern const int16_t AudioWaveformSine[257];
+extern "C"
+{
+  extern const int16_t AudioWaveformSine[257];
 }
 
 void NHexBassHit::noteOn(void)
 {
   __disable_irq();
-
-  wav_phasor = 0;
-  wav_phasor2 = 0;
-
-  env_lin_current = 0x7fff0000;
-  
+  // tell ::update to fade_to_start_attack_level in one block
+  fade_to_start_attack_level = true;
   __enable_irq();
 }
 
@@ -47,13 +44,13 @@ void NHexBassHit::secondMix(float level)
 {
   // As level goes from 0.0 to 1.0,
   // second goes from 0 to 1/2 scale
-  // first goes from full scale to half scale. 
+  // first goes from full scale to half scale.
 
-  if(level < 0)
+  if (level < 0)
   {
     level = 0;
   }
-  else if(level > 1.0)
+  else if (level > 1.0)
   {
     level = 1.0;
   }
@@ -64,17 +61,16 @@ void NHexBassHit::secondMix(float level)
   __enable_irq();
 }
 
-
 void NHexBassHit::pitchMod(float depth)
 {
   int32_t intdepth, calc;
 
   // Validate parameter
-  if(depth < 0)
+  if (depth < 0)
   {
     depth = 0;
   }
-  else if(depth > 1.0)
+  else if (depth > 1.0)
   {
     depth = 1.0;
   }
@@ -86,18 +82,18 @@ void NHexBassHit::pitchMod(float depth)
 
   // Lets turn it into 2.14, in range between -0.75 and 2.9999, woth 0 at 0.5
   // It becomes the scalar for the modulation component of the phasor increment.
-  if(intdepth < 0x4000)
+  if (intdepth < 0x4000)
   {
     // 0 to 0.5 becomes
     // -0x3000 (0xffffCfff) to 0 ()
-    calc = ((0x4000 - intdepth) * 0x3000 )>> 14;
+    calc = ((0x4000 - intdepth) * 0x3000) >> 14;
     calc = -calc;
   }
   else
   {
     // 0.5 to 1.0 becomes
     // 0x00 to 0xbfa0
-    calc = ((intdepth - 0x4000) * 0xc000)>> 14;
+    calc = ((intdepth - 0x4000) * 0xc000) >> 14;
   }
 
   // Call result 2.14 format (max of ~3.99...approx 4)
@@ -105,39 +101,55 @@ void NHexBassHit::pitchMod(float depth)
   wav_pitch_mod = calc;
 }
 
-
-
 void NHexBassHit::update(void)
 {
   audio_block_t *block_wav;
-  int16_t *p_wave, *end;
+  int16_t *p_wav_buff, *end;
   int32_t sin_l, sin_r, interp, mod, mod2, delta;
   int32_t interp2;
   int32_t index, scale;
-
   int32_t env_sqr_current; // the square of the linear value - inexpensive quasi exponential decay.
 
   block_wav = allocate();
-  if (!block_wav) return;
-  p_wave = (block_wav->data);
-  end = p_wave + AUDIO_BLOCK_SAMPLES;
+  if (!block_wav)
+    return;
+  p_wav_buff = (block_wav->data);
+  end = p_wav_buff + AUDIO_BLOCK_SAMPLES;
 
-  while(p_wave < end)
+  while (p_wav_buff < end)
   {
-    // Do envelope first
-    if(env_lin_current < 0x0000ffff)
+    // check if env is at zero amplitude
+    if ((env_lin_current < 0x0000ffff) && (fade_to_start_attack_level == false))
     {
       // If envelope has expired, then stuff zeros into output buffer.
-      *p_wave = 0;
-      p_wave++; 
+      *p_wav_buff = 0;
+      p_wav_buff++;
     }
     else
     {
+      // if we are doing something, check if the note was just triggered
+      if (fade_to_start_attack_level == true)
+      {
+        int32_t fade_span = env_attack_start_level - env_lin_prev;
+        // unless env_lin_prev is at 0 or env_attack_start_level
+        // move the env to the attack start level
+        if (fade_span > env_zero_level)
+        {
+          env_lin_current += (fade_span / 0x80);
+        }
+        else
+        {
+          env_lin_current -= env_decrement;
+        }
+      }
+      else
+      {
+      }
       env_lin_current -= env_decrement;
-      env_sqr_current = multiply_16tx16t(env_lin_current, env_lin_current) ;
 
-      // do wave second;
-      wav_phasor  += wav_increment;
+      env_sqr_current = multiply_16tx16t(env_lin_current, env_lin_current);
+
+      wav_phasor += wav_increment;
 
       // modulation changes how we use the increment
       // the increment will be scaled by the modulation amount.
@@ -145,56 +157,55 @@ void NHexBassHit::update(void)
       // Pitch mod is in range [-0.75 .. 3.99999] in 2.14 format
       // Current envelope value gets scaled by mod depth.
       // Then phasor increment gets scaled by that.
-      mod = signed_multiply_32x16b((env_sqr_current), (wav_pitch_mod>>1)) >> 13;      
-      mod2 = signed_multiply_32x16b(wav_increment<<3, mod>>1);
+      mod = signed_multiply_32x16b((env_sqr_current), (wav_pitch_mod >> 1)) >> 13;
+      mod2 = signed_multiply_32x16b(wav_increment << 3, mod >> 1);
 
       wav_phasor += (mod2);
       wav_phasor &= 0x7fffffff;
 
+      // A perfect fifth uses increment of 1.5 times regular increment
+      wav_phasor2 += wav_increment;
+      wav_phasor2 += (wav_increment >> 1);
+      wav_phasor2 += mod2;
+      wav_phasor2 += (mod2 >> 1);
+      wav_phasor2 &= 0x7fffffff;
 
-        // A perfect fifth uses increment of 1.5 times regular increment
-        wav_phasor2 += wav_increment;
-        wav_phasor2 += (wav_increment >> 1);
-        wav_phasor2 += mod2;
-        wav_phasor2 += (mod2 >> 1);
-        wav_phasor2 &= 0x7fffffff;
-
-    
       // Phase to Sine lookup * interp:
       index = wav_phasor >> 23; // take top valid 8 bits
       sin_l = AudioWaveformSine[index];
-      sin_r = AudioWaveformSine[index+1];
+      sin_r = AudioWaveformSine[index + 1];
 
       // The fraction of the phasor in time we are between L and R
-      // is the same as the fraction of the ampliture of that interval we should add 
+      // is the same as the fraction of the amplitude of that interval we should add
       // to L.
-      delta = sin_r-sin_l;
+      delta = sin_r - sin_l;
       scale = (wav_phasor >> 7) & 0xfFFF;
-      delta = (delta * scale)>> 16;
+      delta = (delta * scale) >> 16;
       interp = sin_l + delta;
 
-        index = wav_phasor2 >> 23; // take top valid 8 bits
-        sin_l = AudioWaveformSine[index];
-        sin_r = AudioWaveformSine[index+1];
+      index = wav_phasor2 >> 23; // take top valid 8 bits
+      sin_l = AudioWaveformSine[index];
+      sin_r = AudioWaveformSine[index + 1];
 
-        delta = sin_r-sin_l;
-        scale = (wav_phasor2 >> 7) & 0xFFFF;
-        delta = (delta * scale)>> 16;
-        interp2 = sin_l + delta;
+      delta = sin_r - sin_l;
+      scale = (wav_phasor2 >> 7) & 0xFFFF;
+      delta = (delta * scale) >> 16;
+      interp2 = sin_l + delta;
 
-        // Then scale and add the two waves
-        interp2 = (interp2 * wav_amplitude2 ) >> 15;
-        interp = (interp * wav_amplitude1) >> 15;
-        interp = interp + interp2;
-      
+      // Then scale and add the two waves
+      interp2 = (interp2 * wav_amplitude2) >> 15;
+      interp = (interp * wav_amplitude1) >> 15;
+      interp = interp + interp2;
 
-      *p_wave = signed_multiply_32x16b(env_sqr_current, interp ) >> 15 ;
-      p_wave++; 
+      *p_wav_buff = signed_multiply_32x16b(env_sqr_current, interp) >> 15;
+      p_wav_buff++;
+      // save the previous envelope position
+      env_lin_prev = env_lin_current;
     }
   }
+  // stop fading to env_attack_start_level
+  fade_to_start_attack_level = false;
 
   transmit(block_wav, 0);
   release(block_wav);
-
 }
-

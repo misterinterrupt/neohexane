@@ -9,18 +9,14 @@ const uint8_t SDCARD_SCK_PIN = 14;
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 #define OLED_RESET -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 
-#include "nhex_master_fx_etc.h" // the master / fx mixing
 // GUItool: begin automatically generated code
-NHexBassHit bassHitSynth; //xy=87,308
-// AudioEffectFlange        bassHitFlange;        	//xy=283,408
-// AudioMixer4              bassHitMixer;         	//xy=508,
-// AudioOutputI2S           audioOut;           		//xy=658,3 67
-// AudioConnection          c30(bassHitSynth, 0, bassHitMixer, 0);
-AudioConnection c30(bassHitSynth, 0, inst_mix_1, 0);
-// AudioConnection          c1(bassHitFlange, 0, bassHitMixer, 0);
-// AudioConnection          c31(bassHitMixer, 0, audioOut, 0);
-// AudioConnection          c32(bassHitMixer, 0, audioOut, 1);
-// AudioControlSGTL5000     audioShield;     		//xy=208,617
+NHexBassHit bassHitSynth; //xy=87,208
+AudioMixer4 bassHitMixer; //xy=508,
+AudioOutputI2S audioOut;  //xy=658,3 67
+AudioConnection c30(bassHitSynth, 0, bassHitMixer, 0);
+AudioConnection c32(bassHitMixer, 0, audioOut, 0);
+AudioConnection c33(bassHitMixer, 0, audioOut, 1);
+AudioControlSGTL5000 audioShield; //xy=108,617
 // GUItool: end automatically generated code
 elapsedMillis ledOnMillis;
 bool midiActivity = false;
@@ -47,21 +43,20 @@ void setup()
   pinMode(13, OUTPUT); // LED pin
   digitalWrite(13, LOW);
   usbMIDI.setHandleNoteOn(myNoteOn);
-  usbMIDI.setHandleNoteOff(myNoteOff);
+  // usbMIDI.setHandleNoteOff(myNoteOff);
   usbMIDI.setHandleControlChange(myControlChange);
   AudioMemory(30);
   AudioNoInterrupts();
 
-  bassHitSynth.frequency(60);
+  bassHitSynth.frequency(50);
   bassHitSynth.length(1500);
-  bassHitSynth.secondMix(0.4);
+  bassHitSynth.secondMix(0.5);
   bassHitSynth.pitchMod(0.65);
+  bassHitMixer.gain(0, 0.8);
   audioShield.enable();
-  inst_mix_1.gain(0, 0.8);
-  // bassHitMixer.gain(0, 0.9);
-  audioShield.volume(0.9);
+  audioShield.volume(0.8);
   AudioInterrupts();
-  Serial.print("setup");
+  Serial.println("setup");
 }
 
 void loop()
@@ -94,6 +89,7 @@ void myNoteOn(byte channel, byte note, byte velocity)
   if (note == bassHitSynthNote1 || note == bassHitSynthNote2)
   {
     midiActivity = true;
+    bassHitSynthAmpEnv.noteOn();
     bassHitSynth.noteOn();
   }
 }
@@ -106,10 +102,10 @@ void myNoteOff(byte channel, byte note, byte velocity)
   Serial.print(note, DEC);
   Serial.print(", velocity=");
   Serial.println(velocity, DEC);
-  if (note == bassHitSynthNote1 || note == bassHitSynthNote2)
-  {
-    midiActivity = true;
-  }
+  // if (note == bassHitSynthNote1 || note == bassHitSynthNote2)
+  // {
+  //   midiActivity = true;
+  // }
 }
 
 void myControlChange(byte channel, byte control, byte value)
@@ -120,7 +116,7 @@ void myControlChange(byte channel, byte control, byte value)
   Serial.print(control, DEC);
   Serial.print(", value=");
   Serial.println(value, DEC);
-  // midiActivity = true;
+  midiActivity = true;
 }
 void showNeoHexaneSplash(Adafruit_SSD1306 *screen)
 {
