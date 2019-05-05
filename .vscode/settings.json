@@ -1,6 +1,0 @@
-{
-  "terminal.integrated.env.linux": {
-    "PATH": "/home/interrupt/.platformio/penv/bin:/home/interrupt/.platformio/penv:/home/interrupt/.npm-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/interrupt/n/bin",
-    "PLATFORMIO_CALLER": "vscode"
-  }
-}

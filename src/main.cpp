@@ -15,9 +15,11 @@ AudioMixer4 bassHitMixer; //xy=508,
 AudioOutputI2S audioOut;  //xy=658,3 67
 AudioConnection c30(bassHitSynth, 0, bassHitMixer, 0);
 AudioConnection c32(bassHitMixer, 0, audioOut, 0);
-AudioConnection c33(bassHitMixer, 0, audioOut, 1);
+// AudioConnection c33(bassHitMixer, 0, audioOut, 1);
 AudioControlSGTL5000 audioShield; //xy=108,617
 // GUItool: end automatically generated code
+NHexDualFMHit *dualFMHit1;
+
 elapsedMillis ledOnMillis;
 bool midiActivity = false;
 byte bassHitSynthNote1 = 41;
@@ -47,6 +49,8 @@ void setup()
   usbMIDI.setHandleControlChange(myControlChange);
   AudioMemory(30);
   AudioNoInterrupts();
+
+  dualFMHit1 = new NHexDualFMHit(bassHitMixer, 0, audioOut, 1);
 
   bassHitSynth.frequency(50);
   bassHitSynth.length(1500);
@@ -86,10 +90,14 @@ void myNoteOn(byte channel, byte note, byte velocity)
   Serial.print(note);
   Serial.print(", velocity=");
   Serial.println(velocity, DEC);
-  if (note == bassHitSynthNote1 || note == bassHitSynthNote2)
+  if (note == bassHitSynthNote1)
   {
     midiActivity = true;
     bassHitSynth.noteOn();
+  }
+  if (note == bassHitSynthNote2)
+  {
+    midiActivity = true;
   }
 }
 

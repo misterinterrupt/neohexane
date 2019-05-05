@@ -3,6 +3,7 @@
 #include <Audio.h>
 #include "nhex_bass_hit.h"
 #include "nhex_controls.cpp"
+#include "../include/nhex_dual_fm_hit.h"
 #include <SPI.h>
 #include <SD.h>
 #include <SerialFlash.h>
