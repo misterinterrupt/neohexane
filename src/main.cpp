@@ -22,8 +22,16 @@ NHexDualFMHit *dualFMHit1;
 
 elapsedMillis ledOnMillis;
 bool midiActivity = false;
+float basicNyquist = (float)220050;
+
 byte bassHitSynthNote1 = 41;
 byte bassHitSynthNote2 = 73;
+
+byte bassHitSynthPTCHCC00 = 28;
+byte bassHitSynthPTCHCC01 = 29;
+byte bassHitSynthPTCHCC02 = 30;
+byte bassHitSynthPTCHCC03 = 31;
+
 Adafruit_SSD1306 screen(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 void setup()
@@ -47,7 +55,7 @@ void setup()
   usbMIDI.setHandleNoteOn(myNoteOn);
   // usbMIDI.setHandleNoteOff(myNoteOff);
   usbMIDI.setHandleControlChange(myControlChange);
-  AudioMemory(30);
+  AudioMemory(60);
   AudioNoInterrupts();
 
   dualFMHit1 = new NHexDualFMHit(bassHitMixer, 0, audioOut, 1);
@@ -84,12 +92,12 @@ void myNoteOn(byte channel, byte note, byte velocity)
 {
   // When using MIDIx4 or MIDIx16, usbMIDI.getCable() can be used
   // to read which of the virtual MIDI cables received this message.
-  Serial.print("Note On, ch=");
-  Serial.print(channel, DEC);
-  Serial.print(", note=");
-  Serial.print(note);
-  Serial.print(", velocity=");
-  Serial.println(velocity, DEC);
+  // Serial.print("Note On, ch=");
+  // Serial.print(channel, DEC);
+  // Serial.print(", note=");
+  // Serial.print(note);
+  // Serial.print(", velocity=");
+  // Serial.println(velocity, DEC);
   if (note == bassHitSynthNote1)
   {
     midiActivity = true;
@@ -109,10 +117,10 @@ void myNoteOff(byte channel, byte note, byte velocity)
   Serial.print(note, DEC);
   Serial.print(", velocity=");
   Serial.println(velocity, DEC);
-  // if (note == bassHitSynthNote1 || note == bassHitSynthNote2)
-  // {
-  //   midiActivity = true;
-  // }
+  if (note == bassHitSynthNote1 || note == bassHitSynthNote2)
+  {
+    midiActivity = true;
+  }
 }
 
 void myControlChange(byte channel, byte control, byte value)
@@ -124,6 +132,34 @@ void myControlChange(byte channel, byte control, byte value)
   Serial.print(", value=");
   Serial.println(value, DEC);
   midiActivity = true;
+  if (control == bassHitSynthPTCHCC00)
+  {
+    float val = convertRange((float)(0), (float)(127), (float)(0), (float)(1), value);
+    Serial.println(val);
+    bassHitSynth.pitchMod(val);
+    midiActivity = true;
+  }
+  if (control == bassHitSynthPTCHCC01)
+  {
+    float val = convertRange((float)(0), (float)(127), (float)(0.0), (float)(1.0), value);
+    Serial.print(val);
+    bassHitSynth.secondMix(val);
+    midiActivity = true;
+  }
+  if (control == bassHitSynthPTCHCC02)
+  {
+    float val = convertRange((float)(0), (float)(127), (float)(20), 128, value);
+    Serial.print(val);
+    bassHitSynth.frequency(val);
+    midiActivity = true;
+  }
+  if (control == bassHitSynthPTCHCC03)
+  {
+    int32_t val = convertRange((int32_t)(0), (int32_t)(127), (int32_t)(20), (int32_t)(5000), (int32_t)(value));
+    Serial.print(val);
+    bassHitSynth.length(val);
+    midiActivity = true;
+  }
 }
 void showNeoHexaneSplash(Adafruit_SSD1306 *screen)
 {
@@ -138,4 +174,26 @@ void showNeoHexaneSplash(Adafruit_SSD1306 *screen)
   screen->setCursor(38, 50);
   screen->println(F("R U N N E R"));
   screen->display();
+}
+
+float convertRange(
+    float originalStart, float originalEnd,
+    float newStart, float newEnd,
+    float value)
+{
+  float range1 = originalEnd - originalStart;
+  float range2 = newEnd - newStart;
+  float finalValue = ((value - originalStart) * range2) / range1 + newStart;
+  return finalValue;
+}
+
+int32_t convertRange(
+    int32_t originalStart, int32_t originalEnd,
+    int32_t newStart, int32_t newEnd,
+    int32_t value)
+{
+  int32_t range1 = originalEnd - originalStart;
+  int32_t range2 = newEnd - newStart;
+  int32_t finalValue = ((value - originalStart) * range2) / range1 + newStart;
+  return finalValue;
 }
