@@ -11,14 +11,18 @@ const uint8_t SDCARD_SCK_PIN = 14;
 
 // GUItool: begin automatically generated code
 NHexBassHit bassHitSynth; //xy=87,208
+AudioSynthWaveformDc dc;
+NHex3StageEnvelope testEnv;
 AudioMixer4 bassHitMixer; //xy=508,
 AudioOutputI2S audioOut;  //xy=658,3 67
+AudioConnection c28(dc, 0, testEnv, 0);
+AudioConnection c29(testEnv, 0, bassHitMixer, 1);
 AudioConnection c30(bassHitSynth, 0, bassHitMixer, 0);
 AudioConnection c32(bassHitMixer, 0, audioOut, 0);
 // AudioConnection c33(bassHitMixer, 0, audioOut, 1);
 AudioControlSGTL5000 audioShield; //xy=108,617
 // GUItool: end automatically generated code
-NHexDualFMHit *dualFMHit1;
+// NHexDualFMHit *dualFMHit1;
 
 elapsedMillis ledOnMillis;
 bool midiActivity = false;
