@@ -119,4 +119,3 @@ private:
 };
 
 #undef SAMPLES_PER_MSEC
-#endif
