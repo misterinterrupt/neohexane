@@ -11,14 +11,18 @@ const uint8_t SDCARD_SCK_PIN = 14;
 
 // GUItool: begin automatically generated code
 NHexBassHit bassHitSynth; //xy=87,208
+AudioSynthWaveformDc dc;
+NHex3StageEnvelope testEnv;
 AudioMixer4 bassHitMixer; //xy=508,
 AudioOutputI2S audioOut;  //xy=658,3 67
+AudioConnection c28(dc, 0, testEnv, 0);
+AudioConnection c29(testEnv, 0, bassHitMixer, 1);
 AudioConnection c30(bassHitSynth, 0, bassHitMixer, 0);
 AudioConnection c32(bassHitMixer, 0, audioOut, 0);
 // AudioConnection c33(bassHitMixer, 0, audioOut, 1);
 AudioControlSGTL5000 audioShield; //xy=108,617
 // GUItool: end automatically generated code
-NHexDualFMHit *dualFMHit1;
+// NHexDualFMHit *dualFMHit1;
 
 elapsedMillis ledOnMillis;
 bool midiActivity = false;
@@ -58,13 +62,20 @@ void setup()
   AudioMemory(60);
   AudioNoInterrupts();
 
-  dualFMHit1 = new NHexDualFMHit(bassHitMixer, 0, audioOut, 1);
+  // dualFMHit1 = new NHexDualFMHit(bassHitMixer, 0, audioOut, 1);
 
   bassHitSynth.frequency(50);
   bassHitSynth.length(1500);
   bassHitSynth.secondMix(0.5);
   bassHitSynth.pitchMod(0.65);
   bassHitMixer.gain(0, 0.8);
+  testEnv.delay(0.0f); // default values...
+  testEnv.attack(1500.5f);
+  testEnv.hold(800.5f);
+  testEnv.decay(350.0f);
+  testEnv.sustain(8.0f);
+  testEnv.release(3000.0f);
+  testEnv.releaseNoteOn(5.0f);
   audioShield.enable();
   audioShield.volume(0.8);
   AudioInterrupts();
@@ -102,6 +113,7 @@ void myNoteOn(byte channel, byte note, byte velocity)
   {
     midiActivity = true;
     bassHitSynth.noteOn();
+    testEnv.noteOn();
   }
   if (note == bassHitSynthNote2)
   {
