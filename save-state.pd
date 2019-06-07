@@ -1,0 +1,31 @@
+#N struct params float x float y symbol name;
+#N canvas 640 72 612 568 10;
+#X obj 208 3 inlet;
+#X obj 256 3 inlet;
+#X floatatom 208 32 5 0 0 0 - - -, f 5;
+#X obj 321 123 pointer;
+#X obj 32 16 bng 44 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X msg 108 102 cutoff;
+#X obj 108 61 t b b b;
+#X msg 386 148 \; params clear;
+#X obj 110 202 append -s params-save-state-struct name;
+#X text 188 316 params-save-state takes a symbol "name" which is the
+unique-id of the subpatch that is saving params and an array of floats
+"params" that are the parameter values for the saving subpatch. params
+can be of whatever size or order the saving subpatch needs.;
+#X obj 284 272 print;
+#X obj 262 246 struct params float x float y symbol name;
+#X obj 104 146 pack 10 11 name s;
+#X obj 56 288 array;
+#X msg 321 77 traverse params \, next;
+#X connect 0 0 2 0;
+#X connect 3 0 8 2;
+#X connect 4 0 6 0;
+#X connect 5 0 12 3;
+#X connect 6 0 14 0;
+#X connect 6 1 5 0;
+#X connect 6 2 12 0;
+#X connect 11 0 10 0;
+#X connect 12 0 8 0;
+#X connect 14 0 3 0;

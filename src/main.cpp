@@ -12,7 +12,7 @@ const uint8_t SDCARD_SCK_PIN = 14;
 // GUItool: begin automatically generated code
 NHexBassHit bassHitSynth; //xy=87,208
 AudioSynthWaveformDc dc;
-NHex3StageEnvelope testEnv;
+NHexEnvelope testEnv;
 AudioMixer4 bassHitMixer; //xy=508,
 AudioOutputI2S audioOut;  //xy=658,3 67
 AudioConnection c28(dc, 0, testEnv, 0);
@@ -69,13 +69,6 @@ void setup()
   bassHitSynth.secondMix(0.5);
   bassHitSynth.pitchMod(0.65);
   bassHitMixer.gain(0, 0.8);
-  testEnv.delay(0.0f); // default values...
-  testEnv.attack(1500.5f);
-  testEnv.hold(800.5f);
-  testEnv.decay(350.0f);
-  testEnv.sustain(8.0f);
-  testEnv.release(3000.0f);
-  testEnv.releaseNoteOn(5.0f);
   audioShield.enable();
   audioShield.volume(0.8);
   AudioInterrupts();
