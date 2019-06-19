@@ -10,14 +10,11 @@ const uint8_t SDCARD_SCK_PIN = 14;
 #define OLED_RESET -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 
 // GUItool: begin automatically generated code
-NHexBassHit bassHitSynth; //xy=87,208
-AudioSynthWaveformDc dc;
-NHex3StageEnvelope testEnv;
+
 AudioMixer4 bassHitMixer; //xy=508,
 AudioOutputI2S audioOut;  //xy=658,3 67
-AudioConnection c28(dc, 0, testEnv, 0);
-AudioConnection c29(testEnv, 0, bassHitMixer, 1);
-AudioConnection c30(bassHitSynth, 0, bassHitMixer, 0);
+exfaust0 bassHit;
+AudioConnection c30(bassHit, 0, bassHitMixer, 0);
 AudioConnection c32(bassHitMixer, 0, audioOut, 0);
 // AudioConnection c33(bassHitMixer, 0, audioOut, 1);
 AudioControlSGTL5000 audioShield; //xy=108,617
@@ -44,14 +41,14 @@ void setup()
   SPI.setMOSI(SDCARD_MOSI_PIN);
   SPI.setSCK(SDCARD_SCK_PIN);
 
-  if (!(SD.begin(SDCARD_CS_PIN)))
-  {
-    Serial.print("Cannot access SD card");
-  }
-  if (!screen.begin(SSD1306_SWITCHCAPVCC, 0x3C, false, true))
-  {
-    Serial.print("Cannot begin display");
-  }
+  // if (!(SD.begin(SDCARD_CS_PIN)))
+  // {
+  //   Serial.print("Cannot access SD card");
+  // }
+  // if (!screen.begin(SSD1306_SWITCHCAPVCC, 0x3C, false, true))
+  // {
+  //   Serial.print("Cannot begin display");
+  // }
   screen.dim(true);
   showNeoHexaneSplash(&screen);
   pinMode(13, OUTPUT); // LED pin
@@ -59,23 +56,9 @@ void setup()
   usbMIDI.setHandleNoteOn(myNoteOn);
   // usbMIDI.setHandleNoteOff(myNoteOff);
   usbMIDI.setHandleControlChange(myControlChange);
-  AudioMemory(60);
+  AudioMemory(40);
   AudioNoInterrupts();
 
-  // dualFMHit1 = new NHexDualFMHit(bassHitMixer, 0, audioOut, 1);
-
-  bassHitSynth.frequency(50);
-  bassHitSynth.length(1500);
-  bassHitSynth.secondMix(0.5);
-  bassHitSynth.pitchMod(0.65);
-  bassHitMixer.gain(0, 0.8);
-  testEnv.delay(0.0f); // default values...
-  testEnv.attack(1500.5f);
-  testEnv.hold(800.5f);
-  testEnv.decay(350.0f);
-  testEnv.sustain(8.0f);
-  testEnv.release(3000.0f);
-  testEnv.releaseNoteOn(5.0f);
   audioShield.enable();
   audioShield.volume(0.8);
   AudioInterrupts();
@@ -112,8 +95,6 @@ void myNoteOn(byte channel, byte note, byte velocity)
   if (note == bassHitSynthNote1)
   {
     midiActivity = true;
-    bassHitSynth.noteOn();
-    testEnv.noteOn();
   }
   if (note == bassHitSynthNote2)
   {
@@ -148,28 +129,24 @@ void myControlChange(byte channel, byte control, byte value)
   {
     float val = convertRange((float)(0), (float)(127), (float)(0), (float)(1), value);
     Serial.println(val);
-    bassHitSynth.pitchMod(val);
     midiActivity = true;
   }
   if (control == bassHitSynthPTCHCC01)
   {
     float val = convertRange((float)(0), (float)(127), (float)(0.0), (float)(1.0), value);
     Serial.print(val);
-    bassHitSynth.secondMix(val);
     midiActivity = true;
   }
   if (control == bassHitSynthPTCHCC02)
   {
     float val = convertRange((float)(0), (float)(127), (float)(20), 128, value);
     Serial.print(val);
-    bassHitSynth.frequency(val);
     midiActivity = true;
   }
   if (control == bassHitSynthPTCHCC03)
   {
     int32_t val = convertRange((int32_t)(0), (int32_t)(127), (int32_t)(20), (int32_t)(5000), (int32_t)(value));
     Serial.print(val);
-    bassHitSynth.length(val);
     midiActivity = true;
   }
 }
@@ -179,7 +156,7 @@ void showNeoHexaneSplash(Adafruit_SSD1306 *screen)
   screen->setTextColor(WHITE);
   screen->setTextSize(2);  // Draw 2X-scale text
   screen->setCursor(9, 7); // Start at top-left corner
-  screen->print("NeoHexane");
+  screen->print("MeoHexane");
   screen->setTextSize(1);
   screen->setCursor(20, 35);
   screen->println(F("V O I D"));
