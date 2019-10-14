@@ -1,8 +1,9 @@
 import("stdfaust.lib");
 ba = library("basics.lib");
 ef = library("misceffects.lib");
+declare options "[midi:on][midi:channel 8]";
 
-gate = button("../../../../[0]gate");
+gate = button("../../../../[0][midi:keyon 41][midi: keyoff 41]gate");
 
 amplitudeEnv(trig) = hgroup("[3]ampEnv", en.asr(
     vslider("../[1]attack", 0.002, 0.0, 0.333, 0.001): si.smoo,
@@ -71,10 +72,10 @@ lopaz = (out)
 with {
   cutoff = vslider("[0]cutoff", 3000, 40, 3000, 0.01) : si.smoo;
   res = vslider("[1]resonance", 5, 1, 100, 1) : si.smoo;
-  //why doesnt this next line work??
   filtMod = vslider("[2]filtMod", 0.2, 0.01, 1.0, 0.01) : si.smoo;
-  f = (cutoff * (filtMod * filterEnv(gate)));
-  out = fi.resonlp(f, res, 1.0);
+  //why doesnt this next line work??
+  f = ((filtMod * filterEnv(gate)));
+  out = fi.resonlp(cutoff, res, 1.0);
 };
 
 drive = vslider("[3]drive", 0.1, 0.01, 1, 0.01);
